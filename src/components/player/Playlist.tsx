@@ -3,10 +3,30 @@
 import { usePlayer } from '@/contexts/PlayerContext';
 import { Track } from '@/types/music';
 import { Play } from 'lucide-react';
+import { useTrackDuration } from '@/hooks/useTrackDuration';
 
 interface PlaylistProps {
   tracks: Track[];
 }
+
+const TrackItem = ({ track }: { track: Track }) => {
+  const duration = useTrackDuration(track.url);
+  
+  const formatTime = (seconds: number) => {
+    if (!seconds) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div className="flex items-center space-x-4 p-4">
+      <span>{formatTime(duration)}</span>
+      <span>{track.title}</span>
+      <span>{track.artist}</span>
+    </div>
+  );
+};
 
 export const Playlist: React.FC<PlaylistProps> = ({ tracks }) => {
   const { dispatch, state, audioRef } = usePlayer();

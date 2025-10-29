@@ -8,7 +8,7 @@ import '@/lib/fontawesome';
 const myFont = localFont({
   src: [
     {
-      path: '../../public/fonts/ofont.ru_Marvin.ttf',
+      path: '../../public/fonts/Farabee Regular.ttf',
     },
   ],
 })

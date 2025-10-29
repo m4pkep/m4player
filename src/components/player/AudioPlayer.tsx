@@ -6,6 +6,11 @@ import { Play, Pause, SkipBack, SkipForward, Volume2 } from 'lucide-react';
 export const AudioPlayer: React.FC = () => {
   const { state, dispatch, audioRef } = usePlayer();
 
+  // Если нет текущего трека - не показываем плеер
+  if (!state.currentTrack) {
+    return null;
+  }
+
   const togglePlayback = () => {
     if (audioRef.current) {
       if (state.isPlaying) {
@@ -17,34 +22,18 @@ export const AudioPlayer: React.FC = () => {
     }
   };
 
-  const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTime = parseFloat(e.target.value);
-    if (audioRef.current) {
-      audioRef.current.currentTime = newTime;
-      dispatch({ type: 'SET_PROGRESS', payload: newTime });
-    }
+  const formatTime = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
-
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = parseFloat(e.target.value);
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume;
-      dispatch({ type: 'SET_VOLUME', payload: newVolume });
-    }
-  };
-
-  if (!state.currentTrack) {
-    return (
-      <div className="fixed bottom-0 left-0 right-0 bg-gray-900 text-white p-4">
-        <p>Выберите трек для воспроизведения</p>
-      </div>
-    );
-  }
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-gray-900 text-white p-4">
       <div className="flex items-center justify-between">
-        {/* Информация о треке */}
+        
+        {/* Левая часть - информация о треке */}
         <div className="flex items-center space-x-4">
           <img
             src={state.currentTrack.coverUrl}
@@ -57,7 +46,7 @@ export const AudioPlayer: React.FC = () => {
           </div>
         </div>
 
-        {/* Основные контролы */}
+        {/* Центральная часть - контролы и прогресс бар */}
         <div className="flex flex-col items-center space-y-2">
           <div className="flex items-center space-x-4">
             <button className="p-2 hover:bg-gray-700 rounded-full">
@@ -74,32 +63,32 @@ export const AudioPlayer: React.FC = () => {
             </button>
           </div>
 
-          {/* Прогресс бар */}
+          {/* Прогресс бар с временем */}
           <div className="flex items-center space-x-2 w-96">
             <span className="text-xs text-gray-400">
-              {Math.floor(state.progress / 60)}:
-              {Math.floor(state.progress % 60)
-                .toString()
-                .padStart(2, '0')}
+              {formatTime(state.progress)}
             </span>
             <input
               type="range"
               min="0"
               max={state.duration || 100}
               value={state.progress}
-              onChange={handleProgressChange}
+              onChange={(e) => {
+                const newTime = parseFloat(e.target.value);
+                if (audioRef.current) {
+                  audioRef.current.currentTime = newTime;
+                  dispatch({ type: 'SET_PROGRESS', payload: newTime });
+                }
+              }}
               className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
             />
             <span className="text-xs text-gray-400">
-              {Math.floor((state.duration || 0) / 60)}:
-              {Math.floor((state.duration || 0) % 60)
-                .toString()
-                .padStart(2, '0')}
+              {formatTime(state.duration)}
             </span>
           </div>
         </div>
 
-        {/* Громкость */}
+        {/* Правая часть - громкость */}
         <div className="flex items-center space-x-2">
           <Volume2 size={20} />
           <input
@@ -108,20 +97,24 @@ export const AudioPlayer: React.FC = () => {
             max="1"
             step="0.01"
             value={state.volume}
-            onChange={handleVolumeChange}
+            onChange={(e) => {
+              const newVolume = parseFloat(e.target.value);
+              if (audioRef.current) {
+                audioRef.current.volume = newVolume;
+                dispatch({ type: 'SET_VOLUME', payload: newVolume });
+              }
+            }}
             className="w-24 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
           />
         </div>
       </div>
 
       {/* Скрытый audio элемент */}
-      {state.currentTrack && (
-        <audio
-          ref={audioRef}
-          src={state.currentTrack.url}
-          preload="metadata"
-        />
-      )}
+      <audio
+        ref={audioRef}
+        src={state.currentTrack.url}
+        preload="metadata"
+      />
     </div>
   );
 };
